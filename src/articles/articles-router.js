@@ -1,10 +1,10 @@
-const path = require('path')
-const express = require('express')
-const xss = require('xss')
-const ArticlesService = require('./articles-service')
+const path = require('path');
+const express = require('express');
+const xss = require('xss');
+const ArticlesService = require('./articles-service');
 
-const articlesRouter = express.Router()
-const jsonParser = express.json()
+const articlesRouter = express.Router();
+const jsonParser = express.json();
 
 const serializeArticle = article => ({
   id: article.id,
@@ -12,27 +12,28 @@ const serializeArticle = article => ({
   title: xss(article.title),
   content: xss(article.content),
   date_published: article.date_published,
-})
+});
 
 articlesRouter
   .route('/')
   .get((req, res, next) => {
-    const knexInstance = req.app.get('db')
+    const knexInstance = req.app.get('db');
     ArticlesService.getAllArticles(knexInstance)
       .then(articles => {
-        res.json(articles.map(serializeArticle))
+        res.json(articles.map(serializeArticle));
       })
-      .catch(next)
+      .catch(next);
   })
   .post(jsonParser, (req, res, next) => {
-    const { title, content, style } = req.body
-    const newArticle = { title, content, style }
+    const { title, content, style } = req.body;
+    const newArticle = { title, content, style };
 
     for (const [key, value] of Object.entries(newArticle))
+      // eslint-disable-next-line eqeqeq
       if (value == null)
         return res.status(400).json({
           error: { message: `Missing '${key}' in request body` }
-        })
+        });
 
     ArticlesService.insertArticle(
       req.app.get('db'),
@@ -42,10 +43,10 @@ articlesRouter
         res
           .status(201)
           .location(path.posix.join(req.originalUrl, `/${article.id}`))
-          .json(serializeArticle(article))
+          .json(serializeArticle(article));
       })
-      .catch(next)
-  })
+      .catch(next);
+  });
 
 articlesRouter
   .route('/:article_id')
@@ -57,16 +58,16 @@ articlesRouter
       .then(article => {
         if (!article) {
           return res.status(404).json({
-            error: { message: `Article doesn't exist` }
-          })
+            error: { message: 'Article doesn\'t exist' }
+          });
         }
-        res.article = article
-        next()
+        res.article = article;
+        next();
       })
-      .catch(next)
+      .catch(next);
   })
   .get((req, res, next) => {
-    res.json(serializeArticle(res.article))
+    res.json(serializeArticle(res.article));
   })
   .delete((req, res, next) => {
     ArticlesService.deleteArticle(
@@ -74,21 +75,22 @@ articlesRouter
       req.params.article_id
     )
       .then(numRowsAffected => {
-        res.status(204).end()
+        res.status(204).end();
       })
-      .catch(next)
+      .catch(next);
   })
   .patch(jsonParser, (req, res, next) => {
-    const { title, content, style } = req.body
-    const articleToUpdate = { title, content, style }
+    const { title, content, style } = req.body;
+    const articleToUpdate = { title, content, style };
 
-    const numberOfValues = Object.values(articleToUpdate).filter(Boolean).length
+    const numberOfValues = Object.values(articleToUpdate).filter(Boolean).length;
     if (numberOfValues === 0)
       return res.status(400).json({
         error: {
+          // eslint-disable-next-line quotes
           message: `Request body must content either 'title', 'style' or 'content'`
         }
-      })
+      });
 
     ArticlesService.updateArticle(
       req.app.get('db'),
@@ -96,9 +98,9 @@ articlesRouter
       articleToUpdate
     )
       .then(numRowsAffected => {
-        res.status(204).end()
+        res.status(204).end();
       })
-      .catch(next)
-  })
+      .catch(next);
+  });
 
-module.exports = articlesRouter
+module.exports = articlesRouter;
